@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Cơ sở dữ liệu sinh ra khi chạy
+data/
+*.db
+
+# Build LaTeX
+docs/report/*.aux
+docs/report/*.log
+docs/report/*.toc
+docs/report/*.lof
+docs/report/*.lot
+docs/report/*.out
+docs/report/*.synctex.gz
+
+# IDE
+.idea/
+.vscode/

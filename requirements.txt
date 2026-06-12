@@ -1,0 +1,9 @@
+# Hệ thống Quản lý Kho hàng chỉ sử dụng thư viện chuẩn của Python.
+# - tkinter:  giao diện đồ họa (đi kèm bản cài Python trên Windows/macOS).
+# - sqlite3:  cơ sở dữ liệu nhúng (thư viện chuẩn).
+# - hashlib:  băm mật khẩu (thư viện chuẩn).
+#
+# Không cần cài thêm gói bên ngoài để chạy ứng dụng.
+#
+# Để chạy bộ kiểm thử (tùy chọn), có thể dùng pytest:
+# pytest
