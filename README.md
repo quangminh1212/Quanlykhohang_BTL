@@ -21,6 +21,26 @@ tích thiết kế hệ thống (PTTKHT), tham khảo cấu trúc từ đề tà
 
 ## Chạy ứng dụng
 
+### Cách 1 — Dùng script tự động (khuyến nghị)
+
+Script sẽ tự kiểm tra Python, tkinter, cài thành phần (nếu cần) và khởi chạy.
+
+- **Windows:** nhấp đúp `run.bat` (hoặc chạy `run.bat` trong CMD).
+- **macOS:** nhấp đúp `run.command` trong Finder, hoặc chạy trong Terminal:
+  ```bash
+  chmod +x run.sh && ./run.sh
+  ```
+- **Linux:**
+  ```bash
+  chmod +x run.sh && ./run.sh
+  ```
+
+> Lưu ý macOS: nếu lần đầu báo chặn "nhà phát triển không xác định", vào
+> *System Settings → Privacy & Security → Open Anyway*. Nếu thiếu tkinter:
+> `brew install python-tk`. Trên Linux Debian/Ubuntu: `sudo apt install python3-tk`.
+
+### Cách 2 — Chạy thủ công
+
 ```bash
 python run.py
 ```
@@ -39,6 +59,9 @@ Lần đầu chạy, hệ thống tự tạo CSDL `data/warehouse.db` và nạp 
 ```
 Quanlykhohang_BTL/
 ├── run.py                      # Điểm khởi chạy ứng dụng
+├── run.bat                     # Script khởi chạy cho Windows
+├── run.sh                      # Script khởi chạy cho macOS/Linux
+├── run.command                 # Double-click chạy trên macOS (Finder)
 ├── requirements.txt
 ├── sql/init.sql                # Lược đồ CSDL (tham khảo)
 ├── src/warehouse/
