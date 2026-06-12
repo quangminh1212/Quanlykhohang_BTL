@@ -1,0 +1,946 @@
+% =====================================================================
+%  BÁO CÁO BÀI TẬP LỚN - PHÂN TÍCH THIẾT KẾ HỆ THỐNG
+%  Đề tài: XÂY DỰNG HỆ THỐNG QUẢN LÝ KHO HÀNG
+%
+%  Biên dịch (khuyến nghị):  pdflatex main.tex  (chạy 2 lần để cập nhật mục lục)
+%  Yêu cầu gói: babel (vietnamese / vntex), tikz, listings, booktabs, ...
+% =====================================================================
+\documentclass[12pt,a4paper]{report}
+
+% --- Hỗ trợ tiếng Việt: tương thích cả pdfLaTeX lẫn XeLaTeX/LuaLaTeX ---
+\usepackage{iftex}
+\ifPDFTeX
+    \usepackage[utf8]{inputenc}
+    \usepackage[T5]{fontenc}
+    \usepackage[vietnamese]{babel}
+\else
+    \usepackage{fontspec}
+    \usepackage{polyglossia}
+    \setdefaultlanguage{vietnamese}
+    \setmainfont{Latin Modern Roman}
+\fi
+
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2cm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\usepackage{setspace}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage[hidelinks]{hyperref}
+
+\onehalfspacing
+
+% --- Màu sắc ---
+\definecolor{primary}{HTML}{1F6FEB}
+\definecolor{darkblue}{HTML}{10243E}
+\definecolor{codegray}{HTML}{F4F6FB}
+\definecolor{kwcolor}{HTML}{0B5394}
+\definecolor{strcolor}{HTML}{1A7F37}
+\definecolor{cmtcolor}{HTML}{6B7785}
+
+% --- Định dạng tiêu đề chương ---
+\titleformat{\chapter}[block]
+  {\normalfont\Large\bfseries\color{darkblue}}
+  {CHƯƠNG \thechapter.}{0.6em}{\Large}
+\titlespacing*{\chapter}{0pt}{0pt}{16pt}
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\itshape Hệ thống Quản lý Kho hàng}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Cấu hình listings cho mã Python ---
+\lstdefinestyle{py}{
+  language=Python,
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{kwcolor}\bfseries,
+  stringstyle=\color{strcolor},
+  commentstyle=\color{cmtcolor}\itshape,
+  numbers=left, numberstyle=\tiny\color{cmtcolor}, numbersep=8pt,
+  frame=single, rulecolor=\color{primary},
+  breaklines=true, showstringspaces=false, tabsize=4,
+  captionpos=b, literate={đ}{{\dj}}1 {á}{{\'a}}1 {à}{{\`a}}1
+}
+\lstset{style=py}
+
+% Lệnh tiện ích cho ô bảng đặc tả use case
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% Hình người (actor) vẽ bằng TikZ, dùng trong sơ đồ use case
+\newcommand{\actorfig}{%
+  \begin{tikzpicture}[scale=0.32, line width=0.7pt]
+    \draw (0,2) circle (0.45);              % đầu
+    \draw (0,1.55) -- (0,0.2);              % thân
+    \draw (-0.8,1.1) -- (0.8,1.1);          % tay
+    \draw (0,0.2) -- (-0.6,-0.7);           % chân trái
+    \draw (0,0.2) -- (0.6,-0.7);            % chân phải
+  \end{tikzpicture}%
+}
+
+\begin{document}
+
+% =====================================================================
+%  TRANG BÌA
+% =====================================================================
+\begin{titlepage}
+\centering
+{\large ĐẠI HỌC BÁCH KHOA HÀ NỘI\par}
+{\large TRUNG TÂM ĐÀO TẠO LIÊN TỤC\par}
+\vspace{0.3cm}
+{\large ------o0o------\par}
+\vspace{2.5cm}
+
+{\Huge\bfseries BÀI TẬP LỚN\par}
+\vspace{1.5cm}
+{\large\itshape Đề tài:\par}
+\vspace{0.4cm}
+{\LARGE\bfseries\color{darkblue} XÂY DỰNG HỆ THỐNG\\[0.3cm] QUẢN LÝ KHO HÀNG\par}
+\vspace{2.5cm}
+
+\begin{flushleft}
+\hspace{2.5cm}
+\begin{tabular}{ll}
+\textbf{GVHD:} & ThS. Phạm Thị Phương Giang \\[4pt]
+\textbf{Lớp:} & B2CQ-CNTT01-K69 \\[4pt]
+\textbf{Nhóm 9:} & 202490061: Đỗ Thị Thảo Hương \\
+ & 202490084: Lê Minh Tuấn \\
+ & 202490080: Nguyễn Trọng Sang \\
+\end{tabular}
+\end{flushleft}
+
+\vfill
+{\large Hà Nội, tháng 06 năm 2026\par}
+\end{titlepage}
+
+% =====================================================================
+%  MỤC LỤC
+% =====================================================================
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+
+% =====================================================================
+\chapter{KHẢO SÁT HIỆN TRẠNG}
+% =====================================================================
+
+\section{Tình hình thực tế}
+
+Hiện nay, hoạt động quản lý tại nhiều kho hàng của các doanh nghiệp vừa và nhỏ
+vẫn chủ yếu dựa trên phương pháp bán thủ công: ghi chép sổ sách, theo dõi tồn
+kho bằng các bảng tính rời rạc (Excel) hoặc giấy tờ. Khi quy mô kho mở rộng, số
+lượng mặt hàng đa dạng và tần suất nhập -- xuất tăng cao, phương pháp truyền
+thống bắt đầu bộc lộ sự quá tải, cồng kềnh và thiếu chính xác.
+
+Bên cạnh đó, việc thiếu công cụ thống kê và báo cáo tự động khiến công tác quản
+trị gặp nhiều hạn chế. Ban quản lý khó nắm bắt chính xác lượng tồn kho thực tế,
+giá trị hàng tồn cũng như xu hướng luân chuyển hàng hóa để lập kế hoạch nhập
+hàng hợp lý. Các quyết định mua bổ sung, phân bổ vốn lưu động thường dựa trên
+cảm tính thay vì dữ liệu thực, làm giảm hiệu quả vận hành và dễ dẫn tới ứ đọng
+vốn hoặc thiếu hàng.
+
+Sự thiếu hụt một hệ thống phần mềm quản lý tập trung dẫn tới hàng loạt điểm
+nghẽn (\textit{pain points}) trong quy trình nghiệp vụ:
+
+\begin{itemize}[leftmargin=1.4cm]
+  \item \textbf{Dữ liệu rời rạc, dễ sai sót:} Thông tin về mặt hàng, nhà cung
+  cấp và phiếu nhập/xuất không được liên kết. Nhập liệu và đối soát thủ công
+  thường xuyên dẫn tới sai lệch, trùng lặp hoặc thất lạc dữ liệu.
+
+  \item \textbf{Tiêu tốn thời gian, nhân lực:} Nhân viên kho mất nhiều thời gian
+  để tìm vị trí lưu trữ của hàng hóa, kiểm tra số lượng tồn, hay rà soát sổ sách
+  để lập báo cáo định kỳ.
+
+  \item \textbf{Thiếu kiểm soát, dễ thất thoát:} Không có cơ chế cảnh báo tự
+  động, kho khó theo dõi các mặt hàng sắp hết hoặc tồn quá lâu. Việc đối soát
+  giá trị tồn kho và truy vết nguồn gốc giao dịch diễn ra chậm trễ.
+
+  \item \textbf{Khó phân quyền và truy vết trách nhiệm:} Khi nhiều người cùng
+  thao tác trên một bảng tính chung, hệ thống không ghi nhận được ai đã thực
+  hiện giao dịch nào, gây khó khăn cho việc kiểm tra và quy trách nhiệm.
+\end{itemize}
+
+\section{Các nhiệm vụ cần số hóa}
+
+Từ những hạn chế trên, việc xây dựng một \textbf{Hệ thống Quản lý Kho hàng} là
+yêu cầu cấp thiết. Hệ thống số hóa sẽ giúp chuẩn hóa và tự động hóa toàn bộ quy
+trình nghiệp vụ: bảo đảm tính toàn vẹn dữ liệu, giảm áp lực cho nhân viên, tối
+ưu hóa việc kiểm soát tồn kho và cung cấp số liệu chính xác phục vụ ra quyết
+định.
+
+Phạm vi đề tài tập trung số hóa và tự động hóa các quy trình quản trị cốt lõi
+của kho: từ khâu tiếp nhận, đăng ký tài khoản người dùng cho tới quản lý chi
+tiết hồ sơ cá nhân và phân quyền. Song song đó, hệ thống số hóa toàn bộ danh mục
+hàng hóa và nhà cung cấp, giúp việc phân loại, cập nhật và tra cứu diễn ra khoa
+học, chính xác.
+
+Bên cạnh nền tảng quản trị dữ liệu, đề tài đi sâu vào bài toán luân chuyển hàng
+hóa thông qua hai nghiệp vụ giao dịch trực tiếp là nhập kho và xuất kho, đồng
+thời lưu trữ chặt chẽ lịch sử nhập/xuất để hỗ trợ tra soát. Cuối cùng, toàn bộ
+dữ liệu vận hành được tổng hợp qua chức năng thống kê và báo cáo, cung cấp cho
+ban quản lý cái nhìn toàn cảnh về tình hình kho và mức độ luân chuyển hàng hóa.
+
+\section{Mô tả các nghiệp vụ}
+
+\subsection{Nghiệp vụ 1: Tiếp nhận và đăng ký tài khoản người dùng}
+\textbf{Mục đích:} Số hóa và quản lý danh sách người dùng (nhân viên kho, quản
+lý kho). Bảo đảm mỗi cá nhân có một định danh duy nhất để truy cập và sử dụng
+dịch vụ của hệ thống.
+
+\noindent\textbf{Tác nhân:} Quản lý kho (Manager), Nhân viên kho (Staff).
+
+\noindent\textbf{Mô tả quy trình:}
+\begin{enumerate}[leftmargin=1.4cm]
+  \item Quản lý kho cung cấp thông tin tài khoản mới (tên đăng nhập, họ tên,
+  email, phòng ban, chức vụ, điện thoại) cho người dùng.
+  \item Hệ thống kiểm tra tính hợp lệ và duy nhất của tên đăng nhập.
+  \item Sau khi xác thực, hệ thống tạo tài khoản, băm mật khẩu và phân quyền
+  tương ứng (Quản lý kho hoặc Nhân viên kho).
+\end{enumerate}
+
+\subsection{Nghiệp vụ 2: Quản lý hồ sơ cá nhân và phân quyền}
+\textbf{Mục đích:} Lưu trữ, cập nhật thông tin cá nhân của người dùng; cho phép
+đổi mật khẩu; phân quyền truy cập các chức năng theo vai trò.
+
+\noindent\textbf{Tác nhân:} Người dùng, Quản lý kho.
+
+\noindent\textbf{Mô tả quy trình:} Người dùng đăng nhập để xem và cập nhật thông
+tin cá nhân (email, phòng ban, chức vụ, điện thoại) hoặc đổi mật khẩu. Hệ thống
+xác thực mật khẩu cũ trước khi cho phép đổi mật khẩu mới. Vai trò người dùng
+quyết định những chức năng được hiển thị: nhân viên kho thực hiện nghiệp vụ
+nhập/xuất và tra cứu; quản lý kho có thêm quyền xóa dữ liệu và xem báo cáo tài
+chính tổng hợp.
+
+\subsection{Nghiệp vụ 3: Quản lý danh mục hàng hóa}
+\textbf{Mục đích:} Số hóa danh mục hàng hóa trong kho, giúp tìm kiếm, phân loại
+và kiểm kê chính xác, nhanh chóng.
+
+\noindent\textbf{Tác nhân:} Nhân viên kho, Quản lý kho.
+
+\noindent\textbf{Mô tả quy trình:} Khi có mặt hàng mới, nhân viên nhập thông tin
+chi tiết: mã SKU, tên hàng, danh mục, đơn vị tính, ngưỡng tồn tối thiểu, đơn
+giá, vị trí lưu trữ và nhà cung cấp. Hệ thống kiểm tra tính duy nhất của mã SKU.
+Nhân viên có thể cập nhật thông tin, đổi trạng thái (Đang kinh doanh / Ngừng
+kinh doanh). Hệ thống tự động cảnh báo những mặt hàng có tồn kho nhỏ hơn hoặc
+bằng ngưỡng tối thiểu.
+
+\subsection{Nghiệp vụ 4: Quản lý nhà cung cấp}
+\textbf{Mục đích:} Lưu trữ và quản lý thông tin các đối tác cung cấp hàng hóa,
+phục vụ việc liên hệ và truy xuất nguồn gốc hàng nhập.
+
+\noindent\textbf{Tác nhân:} Nhân viên kho, Quản lý kho.
+
+\noindent\textbf{Mô tả quy trình:} Người dùng thêm/sửa thông tin nhà cung cấp
+gồm mã, tên, người liên hệ, điện thoại, email, địa chỉ và trạng thái hợp tác.
+Mỗi mặt hàng có thể được gắn với một nhà cung cấp để thuận tiện cho việc đặt
+hàng bổ sung.
+
+\subsection{Nghiệp vụ 5: Xử lý nhập kho}
+\textbf{Mục đích:} Ghi nhận và kiểm soát quá trình nhập hàng hóa vào kho từ nhà
+cung cấp.
+
+\noindent\textbf{Tác nhân:} Nhân viên kho.
+
+\noindent\textbf{Mô tả quy trình:}
+\begin{enumerate}[leftmargin=1.4cm]
+  \item Nhân viên chọn mặt hàng cần nhập, nhập số lượng, đơn giá nhập và nhà
+  cung cấp.
+  \item Hệ thống kiểm tra hợp lệ (số lượng $>$ 0, đơn giá $\geq$ 0).
+  \item Trong cùng một giao dịch CSDL, hệ thống \textit{cộng} số lượng vào tồn
+  kho của mặt hàng và sinh phiếu nhập (mã phiếu dạng \texttt{PN-YYYYMMDD-\#\#\#\#}),
+  ghi nhận thời gian, người thực hiện và thành tiền.
+\end{enumerate}
+
+\subsection{Nghiệp vụ 6: Xử lý xuất kho}
+\textbf{Mục đích:} Ghi nhận quá trình xuất hàng hóa ra khỏi kho và kiểm soát
+tồn kho.
+
+\noindent\textbf{Tác nhân:} Nhân viên kho.
+
+\noindent\textbf{Mô tả quy trình:}
+\begin{enumerate}[leftmargin=1.4cm]
+  \item Nhân viên chọn mặt hàng cần xuất, nhập số lượng, đơn giá xuất và bên
+  nhận.
+  \item Hệ thống kiểm tra điều kiện: tồn kho hiện tại phải lớn hơn hoặc bằng số
+  lượng yêu cầu xuất. Nếu không đủ, hệ thống từ chối và thông báo lỗi.
+  \item Nếu hợp lệ, trong cùng một giao dịch CSDL, hệ thống \textit{trừ} số
+  lượng khỏi tồn kho và sinh phiếu xuất (mã phiếu dạng
+  \texttt{PX-YYYYMMDD-\#\#\#\#}).
+\end{enumerate}
+
+\subsection{Nghiệp vụ 7: Quản lý lịch sử nhập/xuất}
+\textbf{Mục đích:} Lưu vết (\textit{log}) toàn bộ giao dịch của từng mặt hàng và
+từng người dùng để đối soát, truy xuất nguồn gốc và giải quyết khiếu nại.
+
+\noindent\textbf{Tác nhân:} Nhân viên kho, Quản lý kho.
+
+\noindent\textbf{Mô tả quy trình:} Sau mỗi nghiệp vụ nhập (NV5) hoặc xuất (NV6),
+hệ thống tự động đẩy dữ liệu giao dịch vào bảng lịch sử. Người dùng có thể lọc
+theo loại giao dịch (nhập/xuất) hoặc khoảng thời gian để tra cứu, kiểm tra ai là
+người thực hiện giao dịch của một mặt hàng cụ thể.
+
+\subsection{Nghiệp vụ 8: Thống kê và báo cáo}
+\textbf{Mục đích:} Cung cấp số liệu tổng hợp trực quan giúp ban quản lý nắm bắt
+tình hình kho, từ đó ra quyết định nhập bổ sung hoặc điều chỉnh.
+
+\noindent\textbf{Tác nhân:} Quản lý kho.
+
+\noindent\textbf{Mô tả quy trình:} Người quản lý chọn khoảng thời gian thống kê.
+Hệ thống truy xuất dữ liệu và hiển thị các chỉ số: tổng số phiếu nhập/xuất, tổng
+giá trị nhập/xuất, top hàng hóa nhập -- xuất nhiều nhất, cảnh báo tồn thấp và
+tổng giá trị tồn kho. Hệ thống hỗ trợ kết xuất báo cáo giao dịch và báo cáo tồn
+kho ra tệp định dạng CSV (mở được bằng Excel).
+
+% =====================================================================
+\chapter{MÔ HÌNH HÓA YÊU CẦU}
+% =====================================================================
+
+\section{Sơ đồ Use case tổng quát}
+
+Sơ đồ use case tổng quát mô tả các tác nhân và những nhóm chức năng chính mà hệ
+thống cung cấp. Hệ thống có hai tác nhân chính: \textbf{Nhân viên kho} (thực
+hiện nghiệp vụ vận hành hằng ngày) và \textbf{Quản lý kho} (kế thừa toàn bộ
+quyền của nhân viên và bổ sung quyền quản trị: xóa dữ liệu, xem báo cáo thống
+kê tổng hợp).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    actor/.style={align=center, font=\small},
+    usecase/.style={draw, ellipse, minimum width=3.3cm, minimum height=0.95cm,
+                    align=center, font=\footnotesize, fill=primary!8},
+    >={Stealth[]}
+]
+% Tác nhân (vẽ stick figure)
+\node[actor] (staff) at (0,0) {\actorfig\\[2pt]Nhân viên\\kho};
+\node[actor] (manager) at (12,0) {\actorfig\\[2pt]Quản lý\\kho};
+
+% Khung hệ thống
+\begin{scope}[on background layer]
+\node[draw, rounded corners, fit={(2.4,-5.2) (9.6,4.6)},
+      label=above:{\bfseries Hệ thống Quản lý Kho hàng}, fill=gray!3] {};
+\end{scope}
+
+% Use cases
+\node[usecase] (login)    at (6, 4)    {Đăng nhập};
+\node[usecase] (profile)  at (6, 2.7)  {Quản lý hồ sơ cá nhân};
+\node[usecase] (product)  at (6, 1.4)  {Quản lý hàng hóa};
+\node[usecase] (supplier) at (6, 0.1)  {Quản lý nhà cung cấp};
+\node[usecase] (import)   at (6, -1.2) {Nhập kho};
+\node[usecase] (export)   at (6, -2.5) {Xuất kho};
+\node[usecase] (history)  at (6, -3.8) {Xem lịch sử giao dịch};
+\node[usecase] (report)   at (6, -5)   {Báo cáo \& thống kê};
+
+% Liên kết nhân viên kho
+\foreach \uc in {login, profile, product, supplier, import, export, history}
+    \draw (staff) -- (\uc);
+
+% Liên kết quản lý kho (kế thừa nhân viên + báo cáo)
+\foreach \uc in {report, history, export, import, supplier, product, profile, login}
+    \draw (manager) -- (\uc);
+\end{tikzpicture}
+\caption{Sơ đồ Use case tổng quát của hệ thống}
+\label{fig:usecase-tongquat}
+\end{figure}
+
+\noindent\textit{Ghi chú: hình người biểu diễn tác nhân (actor).
+Quản lý kho có quan hệ kế thừa (generalization) với Nhân viên kho.}
+
+\section{Sơ đồ Use case phân rã}
+
+\subsection{Use case Quản lý hàng hóa}
+Gói chức năng \textit{Quản lý hàng hóa} được phân rã thành các use case con:
+\textit{Thêm hàng hóa}, \textit{Sửa hàng hóa}, \textit{Xóa hàng hóa} (chỉ Quản
+lý kho), \textit{Tìm kiếm/Tra cứu} và \textit{Cảnh báo tồn thấp}. Use case
+\textit{Thêm} và \textit{Sửa} đều \texttt{<<include>>} use case \textit{Kiểm tra
+tính hợp lệ} (kiểm tra mã SKU duy nhất, dữ liệu bắt buộc).
+
+\subsection{Use case Xử lý Nhập / Xuất kho}
+Đây là nhóm use case thể hiện rõ quan hệ \texttt{<<include>>} và
+\texttt{<<extend>>}. Use case \textit{Nhập kho} và \textit{Xuất kho} đều
+\texttt{<<include>>} use case \textit{Ghi nhận giao dịch} và \textit{Cập nhật
+tồn kho}. Use case \textit{Xuất kho} có điểm mở rộng \texttt{<<extend>>} là
+\textit{Cảnh báo tồn không đủ} -- chỉ kích hoạt khi số lượng xuất vượt quá tồn
+kho hiện có.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    actor/.style={align=center, font=\small},
+    usecase/.style={draw, ellipse, minimum width=3cm, minimum height=0.9cm,
+                    align=center, font=\footnotesize, fill=primary!8},
+    >={Stealth[]}
+]
+\node[actor] (staff) at (0,-1) {\actorfig\\[2pt]Nhân viên\\kho};
+
+\node[usecase] (import) at (4.5, 1)  {Nhập kho};
+\node[usecase] (export) at (4.5, -3) {Xuất kho};
+\node[usecase] (record) at (9, 0.2)  {Ghi nhận giao dịch};
+\node[usecase] (update) at (9, -1.4) {Cập nhật tồn kho};
+\node[usecase] (warn)   at (9, -3.4) {Cảnh báo tồn\\không đủ};
+
+\draw (staff) -- (import);
+\draw (staff) -- (export);
+
+\draw[->, dashed] (import) -- node[above, font=\tiny, sloped] {<<include>>} (record);
+\draw[->, dashed] (import) -- node[below, font=\tiny, sloped] {<<include>>} (update);
+\draw[->, dashed] (export) -- node[above, font=\tiny, sloped] {<<include>>} (record);
+\draw[->, dashed] (export) -- node[above, font=\tiny, sloped] {<<include>>} (update);
+\draw[->, dashed] (warn)   -- node[above, font=\tiny, sloped] {<<extend>>} (export);
+\end{tikzpicture}
+\caption{Sơ đồ Use case phân rã: Xử lý Nhập / Xuất kho}
+\label{fig:usecase-nhapxuat}
+\end{figure}
+
+\section{Đặc tả Use case}
+
+\subsection{Use case 1: Đăng nhập hệ thống}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|L{3.2cm}|X|}
+\hline
+\textbf{Tên Use case} & Đăng nhập hệ thống \\ \hline
+\textbf{Tác nhân chính} & Nhân viên kho, Quản lý kho \\ \hline
+\textbf{Mô tả tóm tắt} & Người dùng xác thực thông tin để truy cập vào các chức năng tương ứng với vai trò. \\ \hline
+\textbf{Điều kiện} & Người dùng đã được cấp tài khoản. \\ \hline
+\textbf{Luồng chính} &
+1. Người dùng mở ứng dụng và nhập tên đăng nhập, mật khẩu. \newline
+2. Hệ thống băm mật khẩu nhập vào và đối chiếu với CSDL (PBKDF2). \newline
+3. Nếu sai: hiển thị thông báo lỗi. \newline
+4. Nếu đúng: hệ thống xác định vai trò và điều hướng tới màn hình tương ứng. \\ \hline
+\textbf{Ngoại lệ} & Tên đăng nhập hoặc mật khẩu không đúng $\rightarrow$ thông báo lỗi và yêu cầu nhập lại. \\ \hline
+\end{tabularx}
+\caption{Đặc tả use case Đăng nhập hệ thống}
+\end{table}
+
+\subsection{Use case 2: Đăng ký tài khoản người dùng}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|L{3.2cm}|X|}
+\hline
+\textbf{Tên Use case} & Đăng ký tài khoản người dùng \\ \hline
+\textbf{Tác nhân chính} & Quản lý kho \\ \hline
+\textbf{Mô tả tóm tắt} & Quản lý kho tạo tài khoản mới cho nhân viên và phân quyền. \\ \hline
+\textbf{Điều kiện} & Tài khoản chưa tồn tại trên hệ thống. \\ \hline
+\textbf{Luồng chính} &
+1. Quản lý nhập tên đăng nhập, mật khẩu, vai trò và thông tin hồ sơ. \newline
+2. Hệ thống kiểm tra tính duy nhất của tên đăng nhập và độ dài mật khẩu. \newline
+3. Nếu hợp lệ: hệ thống băm mật khẩu, tạo tài khoản và lưu vào CSDL. \\ \hline
+\textbf{Ngoại lệ} & Tên đăng nhập đã tồn tại / mật khẩu quá ngắn $\rightarrow$ báo lỗi. \\ \hline
+\end{tabularx}
+\caption{Đặc tả use case Đăng ký tài khoản}
+\end{table}
+
+\subsection{Use case 3: Thêm hàng hóa mới}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|L{3.2cm}|X|}
+\hline
+\textbf{Tên Use case} & Thêm hàng hóa mới \\ \hline
+\textbf{Tác nhân chính} & Nhân viên kho, Quản lý kho \\ \hline
+\textbf{Mô tả tóm tắt} & Người dùng nhập thông tin một mặt hàng mới vào danh mục kho. \\ \hline
+\textbf{Điều kiện} & Người dùng đã đăng nhập. \\ \hline
+\textbf{Luồng chính} &
+1. Người dùng chọn ``Thêm hàng hóa'' và điền: SKU, tên, danh mục, đơn vị, tồn ban đầu, ngưỡng tối thiểu, đơn giá, vị trí, nhà cung cấp. \newline
+2. Hệ thống kiểm tra hợp lệ (\texttt{<<include>>} Kiểm tra dữ liệu). \newline
+3. Nếu mã SKU trùng: báo lỗi. \newline
+4. Nếu hợp lệ: lưu mặt hàng vào CSDL và làm mới danh sách. \\ \hline
+\textbf{Ngoại lệ} & Thiếu thông tin bắt buộc / SKU trùng $\rightarrow$ báo lỗi. \\ \hline
+\end{tabularx}
+\caption{Đặc tả use case Thêm hàng hóa}
+\end{table}
+
+\subsection{Use case 4: Xử lý nhập kho}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|L{3.2cm}|X|}
+\hline
+\textbf{Tên Use case} & Xử lý nhập kho \\ \hline
+\textbf{Tác nhân chính} & Nhân viên kho \\ \hline
+\textbf{Mô tả tóm tắt} & Ghi nhận nhập hàng từ nhà cung cấp, tăng tồn kho và sinh phiếu nhập. \\ \hline
+\textbf{Điều kiện} & Mặt hàng đã tồn tại trong danh mục. \\ \hline
+\textbf{Luồng chính} &
+1. Nhân viên chọn mặt hàng, nhập số lượng, đơn giá, nhà cung cấp. \newline
+2. Hệ thống kiểm tra hợp lệ. \newline
+3. Trong một giao dịch CSDL: cộng tồn kho \texttt{<<include>>} ghi phiếu nhập. \newline
+4. Hệ thống thông báo mã phiếu và thành tiền. \\ \hline
+\textbf{Ngoại lệ} & Số lượng/đơn giá không hợp lệ $\rightarrow$ hoàn tác (rollback) toàn bộ giao dịch. \\ \hline
+\end{tabularx}
+\caption{Đặc tả use case Xử lý nhập kho}
+\end{table}
+
+\subsection{Use case 5: Xử lý xuất kho}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|L{3.2cm}|X|}
+\hline
+\textbf{Tên Use case} & Xử lý xuất kho \\ \hline
+\textbf{Tác nhân chính} & Nhân viên kho \\ \hline
+\textbf{Mô tả tóm tắt} & Ghi nhận xuất hàng ra khỏi kho, kiểm tra tồn và giảm tồn kho. \\ \hline
+\textbf{Điều kiện} & Mặt hàng có tồn kho lớn hơn 0. \\ \hline
+\textbf{Luồng chính} &
+1. Nhân viên chọn mặt hàng, nhập số lượng, đơn giá, bên nhận. \newline
+2. Hệ thống kiểm tra tồn kho $\geq$ số lượng xuất. \newline
+3. Trong một giao dịch CSDL: trừ tồn kho \texttt{<<include>>} ghi phiếu xuất. \\ \hline
+\textbf{Ngoại lệ (\texttt{<<extend>>})} & Tồn kho không đủ $\rightarrow$ hệ thống từ chối, hoàn tác giao dịch và cảnh báo. \\ \hline
+\end{tabularx}
+\caption{Đặc tả use case Xử lý xuất kho}
+\end{table}
+
+\subsection{Use case 6: Thống kê và báo cáo}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|L{3.2cm}|X|}
+\hline
+\textbf{Tên Use case} & Thống kê và báo cáo \\ \hline
+\textbf{Tác nhân chính} & Quản lý kho \\ \hline
+\textbf{Mô tả tóm tắt} & Tổng hợp số liệu nhập/xuất, tồn kho trong khoảng thời gian và kết xuất báo cáo. \\ \hline
+\textbf{Điều kiện} & Người dùng đăng nhập với vai trò Quản lý kho. \\ \hline
+\textbf{Luồng chính} &
+1. Quản lý chọn khoảng thời gian (Từ ngày -- Đến ngày). \newline
+2. Hệ thống truy vấn và hiển thị: số phiếu nhập/xuất, tổng giá trị, top hàng hóa. \newline
+3. Quản lý nhấn ``Xuất CSV''; hệ thống tạo tệp báo cáo và lưu xuống máy. \\ \hline
+\textbf{Ngoại lệ} & Không có dữ liệu trong khoảng thời gian $\rightarrow$ hiển thị bảng rỗng. \\ \hline
+\end{tabularx}
+\caption{Đặc tả use case Thống kê và báo cáo}
+\end{table}
+
+\section{Biểu đồ lớp của ca sử dụng}
+
+\subsection{Biểu đồ lớp cho ca sử dụng: Đăng nhập \& Đăng ký}
+Biểu đồ thể hiện cấu trúc các lớp tham gia xác thực người dùng. Lớp giao diện
+\texttt{WarehouseApp} gọi xuống \texttt{AccountService}; lớp này ủy quyền cho
+\texttt{AuthService} xử lý trực tiếp với \texttt{UserRepository} để trả về hoặc
+khởi tạo đối tượng \texttt{User}. Việc băm/so khớp mật khẩu do tiện ích
+\texttt{security} (PBKDF2) đảm nhiệm.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  class/.style={draw, rectangle, fill=primary!6, align=left, font=\footnotesize,
+                minimum width=2.6cm, inner sep=4pt},
+  >={Stealth[]}, node distance=1.1cm and 1.6cm
+]
+\node[class] (app)  {\textbf{WarehouseApp}\\\rule{2.6cm}{0.3pt}\\+ login()\\+ register()};
+\node[class] (acc)  [right=of app] {\textbf{AccountService}\\\rule{2.6cm}{0.3pt}\\+ login()\\+ register()\\+ updateProfile()};
+\node[class] (auth) [right=of acc] {\textbf{AuthService}\\\rule{2.6cm}{0.3pt}\\+ login()\\+ register()\\+ changePassword()};
+\node[class] (repo) [below=of auth] {\textbf{UserRepository}\\\rule{2.6cm}{0.3pt}\\+ findByUsername()\\+ insert()};
+\node[class] (user) [left=of repo] {\textbf{User}\\\rule{2.6cm}{0.3pt}\\- username\\- role};
+\draw[->] (app) -- (acc);
+\draw[->] (acc) -- (auth);
+\draw[->] (auth) -- (repo);
+\draw[->] (repo) -- (user);
+\end{tikzpicture}
+\caption{Biểu đồ lớp ca sử dụng Đăng nhập \& Đăng ký}
+\label{fig:class-auth}
+\end{figure}
+
+\subsection{Biểu đồ lớp cho ca sử dụng: Quản lý danh mục hàng hóa}
+Luồng thêm/sửa/xóa/tìm kiếm hàng hóa. \texttt{CatalogService} chứa logic nghiệp
+vụ (kiểm tra hợp lệ, kiểm tra trùng SKU), còn \texttt{ProductRepository} thực
+hiện các câu lệnh SQL trên bảng \texttt{products} để truy xuất thực thể
+\texttt{Product}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  class/.style={draw, rectangle, fill=primary!6, align=left, font=\footnotesize,
+                minimum width=2.6cm, inner sep=4pt},
+  >={Stealth[]}, node distance=1.0cm and 1.7cm
+]
+\node[class] (app)  {\textbf{WarehouseApp}};
+\node[class] (cat)  [right=of app] {\textbf{CatalogService}\\\rule{2.6cm}{0.3pt}\\+ addProduct()\\+ updateProduct()\\+ deleteProduct()\\+ searchProducts()};
+\node[class] (prepo)[right=of cat] {\textbf{ProductRepository}\\\rule{2.6cm}{0.3pt}\\+ findAll()\\+ insert()\\+ update()\\+ deleteById()};
+\node[class] (prod) [below=of prepo] {\textbf{Product}\\\rule{2.6cm}{0.3pt}\\- sku\\- quantity\\- unitPrice};
+\node[class] (srepo)[below=of cat] {\textbf{SupplierRepository}};
+\draw[->] (app) -- (cat);
+\draw[->] (cat) -- (prepo);
+\draw[->] (cat) -- (srepo);
+\draw[->] (prepo) -- (prod);
+\end{tikzpicture}
+\caption{Biểu đồ lớp ca sử dụng Quản lý danh mục hàng hóa}
+\label{fig:class-catalog}
+\end{figure}
+
+\subsection{Biểu đồ lớp cho ca sử dụng: Xử lý Nhập / Xuất kho}
+Đây là ca sử dụng phức tạp nhất vì tác động đồng thời tới hai thực thể
+(\texttt{Transaction} và \texttt{Product}). Logic nhập/xuất nằm ở
+\texttt{InventoryService}; \texttt{TransactionRepository} sử dụng giao dịch CSDL
+(\texttt{BEGIN}/\texttt{COMMIT}/\texttt{ROLLBACK}) để vừa ghi phiếu giao dịch,
+vừa cập nhật số lượng tồn kho một cách an toàn.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  class/.style={draw, rectangle, fill=primary!6, align=left, font=\footnotesize,
+                minimum width=2.6cm, inner sep=4pt},
+  >={Stealth[]}, node distance=1.0cm and 1.7cm
+]
+\node[class] (app)  {\textbf{WarehouseApp}};
+\node[class] (inv)  [right=of app] {\textbf{InventoryService}\\\rule{2.6cm}{0.3pt}\\+ importStock()\\+ exportStock()\\+ findAll()};
+\node[class] (trepo)[right=of inv] {\textbf{TransactionRepository}\\\rule{2.6cm}{0.3pt}\\+ importStock()\\+ exportStock()\\\textit{(transaction CSDL)}};
+\node[class] (tx)   [below=of trepo] {\textbf{Transaction}};
+\node[class] (prod) [below=of inv] {\textbf{Product}};
+\draw[->] (app) -- (inv);
+\draw[->] (inv) -- (trepo);
+\draw[->] (trepo) -- (tx);
+\draw[->] (trepo) -- (prod);
+\end{tikzpicture}
+\caption{Biểu đồ lớp ca sử dụng Xử lý Nhập / Xuất kho}
+\label{fig:class-inventory}
+\end{figure}
+
+\section{Biểu đồ trình tự}
+
+\subsection{Nghiệp vụ Xuất kho}
+Biểu đồ trình tự dưới đây mô tả luồng xử lý nghiệp vụ xuất kho -- nghiệp vụ điển
+hình nhất vì có bước kiểm tra điều kiện và sử dụng giao dịch CSDL. Khi tồn kho
+không đủ, hệ thống hoàn tác và trả về thông báo lỗi cho người dùng.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[]}]
+  % Các lifeline
+  \def\lifelines{6}
+  \node (a1) at (0,0)  {\actorfig};
+  \node (a2) at (3,0)  [draw, fill=primary!8] {:WarehouseApp};
+  \node (a3) at (6.4,0)[draw, fill=primary!8] {:InventoryService};
+  \node (a4) at (10,0) [draw, fill=primary!8] {:TransactionRepository};
+  \node (a5) at (13.4,0)[draw, fill=primary!8] {:Database};
+  \node[below=2pt of a1] {Nhân viên};
+
+  % Đường lifeline dọc
+  \foreach \n in {a1,a2,a3,a4,a5}
+     \draw[dashed] (\n.south) -- ($(\n.south)+(0,-9)$);
+
+  % Các thông điệp
+  \draw[->] ($(a1.south)+(0,-0.8)$) -- node[above]{exportStock(...)} ($(a2.south)+(0,-0.8)$);
+  \draw[->] ($(a2.south)+(0,-1.6)$) -- node[above]{exportStock(...)} ($(a3.south)+(0,-1.6)$);
+  \draw[->] ($(a3.south)+(0,-2.4)$) -- node[above]{exportStock(...)} ($(a4.south)+(0,-2.4)$);
+  \draw[->] ($(a4.south)+(0,-3.2)$) -- node[above]{BEGIN} ($(a5.south)+(0,-3.2)$);
+  \draw[->] ($(a4.south)+(0,-4.0)$) -- node[above]{SELECT tồn kho} ($(a5.south)+(0,-4.0)$);
+  \draw[<-] ($(a4.south)+(0,-4.8)$) -- node[above]{quantity} ($(a5.south)+(0,-4.8)$);
+
+  % Khối alt
+  \draw[thick] (5.6,-5.3) rectangle (14.2,-8.6);
+  \node[anchor=west, fill=primary!15, font=\scriptsize] at (5.6,-5.3) {alt [tồn kho đủ / không đủ]};
+  \draw[->] ($(a4.south)+(0,-5.9)$) -- node[above]{UPDATE trừ tồn} ($(a5.south)+(0,-5.9)$);
+  \draw[->] ($(a4.south)+(0,-6.5)$) -- node[above]{INSERT phiếu xuất} ($(a5.south)+(0,-6.5)$);
+  \draw[->] ($(a4.south)+(0,-7.1)$) -- node[above]{COMMIT} ($(a5.south)+(0,-7.1)$);
+  \draw[dashed] (5.6,-7.5) -- (14.2,-7.5);
+  \node[anchor=west, font=\scriptsize] at (5.7,-7.7) {[không đủ]};
+  \draw[->] ($(a4.south)+(0,-8.2)$) -- node[above]{ROLLBACK} ($(a5.south)+(0,-8.2)$);
+
+  % Trả kết quả
+  \draw[<-, dashed] ($(a1.south)+(0,-8.9)$) -- node[above]{kết quả / thông báo} ($(a2.south)+(0,-8.9)$);
+\end{tikzpicture}
+\caption{Biểu đồ trình tự nghiệp vụ Xuất kho}
+\label{fig:seq-export}
+\end{figure}
+
+\subsection{Các nghiệp vụ khác}
+Các nghiệp vụ còn lại tuân theo cùng một khuôn mẫu trình tự phân tầng:
+\textit{Tác nhân} $\rightarrow$ \texttt{WarehouseApp} (giao diện) $\rightarrow$
+\textit{Service} (nghiệp vụ) $\rightarrow$ \textit{Repository} (truy cập dữ
+liệu) $\rightarrow$ \texttt{Database}. Cụ thể:
+
+\begin{itemize}[leftmargin=1.4cm]
+  \item \textbf{Đăng nhập:} \texttt{WarehouseApp} $\to$ \texttt{AccountService}
+  $\to$ \texttt{AuthService} $\to$ \texttt{UserRepository} (truy vấn người dùng,
+  so khớp mật khẩu PBKDF2) $\to$ trả về \texttt{User}.
+  \item \textbf{Nhập kho:} tương tự xuất kho nhưng \textit{cộng} tồn kho và bỏ
+  qua bước kiểm tra điều kiện tồn.
+  \item \textbf{Quản lý hàng hóa:} \texttt{WarehouseApp} $\to$
+  \texttt{CatalogService} (kiểm tra hợp lệ) $\to$ \texttt{ProductRepository}
+  $\to$ \texttt{Database}.
+  \item \textbf{Thống kê -- báo cáo:} \texttt{WarehouseApp} $\to$
+  \texttt{ReportService} (tổng hợp số liệu) $\to$ các Repository $\to$
+  \texttt{Database}, sau đó kết xuất CSV.
+\end{itemize}
+
+% =====================================================================
+\chapter{THIẾT KẾ HỆ THỐNG}
+% =====================================================================
+
+\section{Thiết kế lớp chi tiết}
+
+Hệ thống được tổ chức theo \textbf{kiến trúc phân tầng} (layered architecture)
+rõ ràng, mỗi tầng có trách nhiệm riêng và chỉ phụ thuộc vào tầng ngay bên dưới:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  layer/.style={draw, rounded corners, minimum width=12cm, minimum height=1.1cm,
+                align=center, font=\small\bfseries}, >={Stealth[]}
+]
+\node[layer, fill=primary!20] (ui) at (0,0) {Tầng Giao diện (UI) -- \texttt{WarehouseApp} (Tkinter)};
+\node[layer, fill=primary!14] (svc) at (0,-1.5) {Tầng Nghiệp vụ (Services)\\\footnotesize\mdseries AccountService, AuthService, CatalogService, InventoryService, ReportService};
+\node[layer, fill=primary!9] (repo) at (0,-3.2) {Tầng Truy cập dữ liệu (Repositories)\\\footnotesize\mdseries UserRepository, ProductRepository, SupplierRepository, TransactionRepository};
+\node[layer, fill=primary!6] (model) at (0,-4.9) {Tầng Mô hình miền (Models)\\\footnotesize\mdseries User, Product, Supplier, Transaction};
+\node[layer, fill=gray!12] (infra) at (0,-6.4) {Hạ tầng \& Cấu hình -- \texttt{Database}, \texttt{DbConfig} (SQLite)};
+\draw[->] (ui) -- (svc);
+\draw[->] (svc) -- (repo);
+\draw[->] (repo) -- (model);
+\draw[->] (repo) -- (infra);
+\end{tikzpicture}
+\caption{Kiến trúc phân tầng tổng quan của hệ thống}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Tầng giao diện}
+Lớp \texttt{WarehouseApp} là lớp khởi động và điều phối UI trung tâm. Khi chạy,
+phương thức \texttt{main()} khởi tạo \texttt{AppContext} (tạo \texttt{Database}
+từ \texttt{DbConfig}, bảo đảm schema, nạp dữ liệu mẫu, khởi tạo các service),
+sau đó dựng cửa sổ và hiển thị màn hình đăng nhập. Lớp này quản lý trạng thái
+điều hướng (\texttt{current\_user}, màn hình hiện tại) và gọi các service tương
+ứng khi người dùng thao tác.
+
+\subsection{Tầng nghiệp vụ}
+Gồm các lớp service xử lý logic chính:
+\begin{itemize}[leftmargin=1.2cm]
+  \item \texttt{AccountService} -- lớp trung gian cung cấp nghiệp vụ tài khoản,
+  ủy quyền cho \texttt{AuthService}.
+  \item \texttt{AuthService} -- xác thực đăng nhập, đăng ký, đổi mật khẩu (băm
+  PBKDF2-HMAC-SHA256 có muối).
+  \item \texttt{CatalogService} -- quản lý hàng hóa và nhà cung cấp, kiểm tra
+  tính hợp lệ và trùng lặp dữ liệu.
+  \item \texttt{InventoryService} -- điều phối nghiệp vụ nhập/xuất kho.
+  \item \texttt{ReportService} -- tổng hợp số liệu thống kê và kết xuất báo cáo
+  CSV.
+\end{itemize}
+
+\subsection{Tầng truy cập dữ liệu}
+Gồm \texttt{UserRepository}, \texttt{ProductRepository},
+\texttt{SupplierRepository} và \texttt{TransactionRepository}. Các repository
+thực hiện câu lệnh SQL trực tiếp. Đặc biệt, \texttt{TransactionRepository} sử
+dụng \textbf{giao dịch CSDL} cho hai thao tác \texttt{import\_stock} và
+\texttt{export\_stock}: khi nhập kho, hệ thống kiểm tra hàng hóa, tăng số lượng
+và thêm bản ghi giao dịch trong cùng một transaction; khi xuất kho, hệ thống
+kiểm tra tồn kho, trừ số lượng và ghi giao dịch cũng trong cùng transaction,
+bảo đảm tính toàn vẹn (atomicity).
+
+Đoạn mã sau minh họa cơ chế giao dịch khi xuất kho:
+
+\begin{lstlisting}[caption={Xử lý xuất kho với giao dịch CSDL (rút gọn)}]
+def export_stock(self, *, product_id, quantity, unit_price, partner, username, note=""):
+    with self._db.transaction() as conn:   # BEGIN ... COMMIT / ROLLBACK
+        product = conn.execute(
+            "SELECT id, name, quantity FROM products WHERE id = ?",
+            (product_id,)).fetchone()
+        if product is None:
+            raise ProductNotFoundError(...)
+        if product["quantity"] < quantity:          # kiem tra ton kho
+            raise InsufficientStockError(...)        # -> rollback tu dong
+        conn.execute("UPDATE products SET quantity = quantity - ? WHERE id = ?",
+                     (quantity, product_id))         # tru ton kho
+        code = self._next_code(conn, "EXPORT")       # sinh ma phieu
+        conn.execute("INSERT INTO transactions (...) VALUES (...)", (...))
+        return Transaction(...)
+\end{lstlisting}
+
+\section{Cơ sở dữ liệu}
+
+Hệ thống sử dụng \textbf{SQLite} -- một hệ quản trị CSDL quan hệ nhúng, lưu toàn
+bộ dữ liệu trong một tệp duy nhất, không cần cài đặt máy chủ. Lựa chọn này giúp
+phần mềm chạy được ngay trên mọi máy có Python. Thiết kế lớp vẫn tách bạch phần
+cấu hình (\texttt{DbConfig}) và kết nối (\texttt{Database}) nên có thể dễ dàng
+chuyển sang MySQL/PostgreSQL khi triển khai thực tế.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{|L{4cm}|X|}
+\hline
+\textbf{Thuộc tính} & \textbf{Nội dung} \\ \hline
+Hệ quản trị CSDL & SQLite 3 \\ \hline
+Tên CSDL & \texttt{data/warehouse.db} \\ \hline
+File schema chính & \texttt{sql/init.sql} (tự tạo trong \texttt{database.py}) \\ \hline
+File cấu hình & \texttt{src/warehouse/config/db\_config.py} \\ \hline
+Cơ chế bảo mật mật khẩu & PBKDF2-HMAC-SHA256 (có muối, 120.000 vòng lặp) \\ \hline
+Mục đích & Quản lý hàng hóa, nhà cung cấp, người dùng và giao dịch nhập/xuất kho. \\ \hline
+\end{tabularx}
+\caption{Thông tin tổng quan cơ sở dữ liệu}
+\end{table}
+
+\noindent\textbf{Danh sách bảng:}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{|c|L{3.5cm}|X|}
+\hline
+\textbf{STT} & \textbf{Tên bảng} & \textbf{Mục đích} \\ \hline
+1 & \texttt{users} & Tài khoản, mật khẩu mã hóa, vai trò và hồ sơ người dùng. \\ \hline
+2 & \texttt{suppliers} & Thông tin nhà cung cấp hàng hóa. \\ \hline
+3 & \texttt{products} & Danh mục hàng hóa và số lượng tồn kho. \\ \hline
+4 & \texttt{transactions} & Lịch sử giao dịch nhập/xuất kho. \\ \hline
+\end{tabularx}
+\caption{Danh sách các bảng trong CSDL}
+\end{table}
+
+\subsection{Bảng \texttt{users}}
+\begin{longtable}{|L{3cm}|L{3.2cm}|L{3.2cm}|L{4.4cm}|}
+\hline
+\textbf{Tên cột} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả} \\ \hline
+\endhead
+id & INTEGER & PK, Auto Increment & Mã người dùng. \\ \hline
+username & TEXT & Not Null, Unique & Tên đăng nhập. \\ \hline
+password\_hash & TEXT & Not Null & Mật khẩu băm PBKDF2. \\ \hline
+role & TEXT & Not Null, Check & Vai trò: \texttt{MANAGER} / \texttt{STAFF}. \\ \hline
+full\_name & TEXT & Default '' & Họ và tên. \\ \hline
+email & TEXT & Default '' & Email. \\ \hline
+department & TEXT & Default '' & Phòng ban. \\ \hline
+position & TEXT & Default '' & Chức vụ. \\ \hline
+phone & TEXT & Default '' & Số điện thoại. \\ \hline
+\caption{Cấu trúc bảng users}
+\end{longtable}
+
+\subsection{Bảng \texttt{suppliers}}
+\begin{longtable}{|L{3cm}|L{3cm}|L{3.4cm}|L{4.4cm}|}
+\hline
+\textbf{Tên cột} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả} \\ \hline
+\endhead
+id & INTEGER & PK, Auto Increment & Mã nhà cung cấp. \\ \hline
+code & TEXT & Not Null, Unique & Mã định danh nhà cung cấp. \\ \hline
+name & TEXT & Not Null & Tên nhà cung cấp. \\ \hline
+contact\_person & TEXT & Default '' & Người liên hệ. \\ \hline
+phone & TEXT & Default '' & Điện thoại. \\ \hline
+email & TEXT & Default '' & Email. \\ \hline
+address & TEXT & Default '' & Địa chỉ. \\ \hline
+status & TEXT & Not Null, Check & \texttt{ACTIVE} / \texttt{INACTIVE}. \\ \hline
+\caption{Cấu trúc bảng suppliers}
+\end{longtable}
+
+\subsection{Bảng \texttt{products}}
+\begin{longtable}{|L{3cm}|L{2.8cm}|L{3.6cm}|L{4cm}|}
+\hline
+\textbf{Tên cột} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả} \\ \hline
+\endhead
+id & INTEGER & PK, Auto Increment & Mã hàng hóa. \\ \hline
+sku & TEXT & Not Null, Unique & Mã SKU. \\ \hline
+name & TEXT & Not Null & Tên hàng hóa. \\ \hline
+category & TEXT & Default '' & Danh mục. \\ \hline
+unit & TEXT & Default 'cái' & Đơn vị tính. \\ \hline
+quantity & INTEGER & Default 0, Check $\geq$ 0 & Số lượng tồn kho. \\ \hline
+min\_quantity & INTEGER & Default 0, Check $\geq$ 0 & Ngưỡng tồn tối thiểu. \\ \hline
+unit\_price & REAL & Default 0, Check $\geq$ 0 & Đơn giá. \\ \hline
+location & TEXT & Default '' & Vị trí lưu trữ. \\ \hline
+supplier\_id & INTEGER & Foreign Key & Tham chiếu \texttt{suppliers(id)}. \\ \hline
+status & TEXT & Not Null, Check & \texttt{ACTIVE} / \texttt{DISCONTINUED}. \\ \hline
+\caption{Cấu trúc bảng products}
+\end{longtable}
+
+\subsection{Bảng \texttt{transactions}}
+\begin{longtable}{|L{3.2cm}|L{2.6cm}|L{3.2cm}|L{4cm}|}
+\hline
+\textbf{Tên cột} & \textbf{Kiểu dữ liệu} & \textbf{Ràng buộc} & \textbf{Mô tả} \\ \hline
+\endhead
+id & INTEGER & PK, Auto Increment & Mã giao dịch. \\ \hline
+code & TEXT & Not Null, Unique & Mã phiếu (PN-/PX-...). \\ \hline
+type & TEXT & Not Null, Check & \texttt{IMPORT} / \texttt{EXPORT}. \\ \hline
+product\_id & INTEGER & Not Null, FK & Mã hàng hóa giao dịch. \\ \hline
+product\_name & TEXT & Not Null & Tên hàng tại thời điểm giao dịch. \\ \hline
+quantity & INTEGER & Check $>$ 0 & Số lượng. \\ \hline
+unit\_price & REAL & Check $\geq$ 0 & Đơn giá giao dịch. \\ \hline
+total & REAL & Check $\geq$ 0 & Thành tiền. \\ \hline
+partner & TEXT & Default '' & Nhà cung cấp / bên nhận. \\ \hline
+user\_username & TEXT & Not Null, FK & Người thực hiện. \\ \hline
+transaction\_date & TIMESTAMP & Default now & Thời gian giao dịch. \\ \hline
+note & TEXT & Default '' & Ghi chú. \\ \hline
+\caption{Cấu trúc bảng transactions}
+\end{longtable}
+
+\section{Bảng sơ đồ quan hệ}
+
+Mô hình thực thể -- liên kết (ERD) của hệ thống thể hiện bốn thực thể chính và
+mối quan hệ giữa chúng:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  entity/.style={draw, rectangle, fill=primary!8, align=center, font=\small\bfseries,
+                 minimum width=2.6cm, minimum height=1cm}, >={Stealth[]}
+]
+\node[entity] (sup)  at (0,0)    {suppliers};
+\node[entity] (prod) at (5,0)    {products};
+\node[entity] (tx)   at (10,0)   {transactions};
+\node[entity] (user) at (10,-3)  {users};
+
+\draw[->] (sup) -- node[above, font=\scriptsize]{1 \quad\quad N} (prod);
+\draw[->] (prod) -- node[above, font=\scriptsize]{1 \quad\quad N} (tx);
+\draw[->] (user) -- node[right, font=\scriptsize]{1 \;:\; N} (tx);
+\end{tikzpicture}
+\caption{Sơ đồ quan hệ thực thể (ERD) của hệ thống}
+\label{fig:erd}
+\end{figure}
+
+\noindent\textbf{Quan hệ giữa các bảng:}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{|L{6cm}|X|}
+\hline
+\textbf{Quan hệ} & \textbf{Mô tả} \\ \hline
+\texttt{suppliers.id} $\rightarrow$ \texttt{products.supplier\_id} & Một nhà cung cấp cung cấp nhiều mặt hàng. \\ \hline
+\texttt{products.id} $\rightarrow$ \texttt{transactions.product\_id} & Một mặt hàng xuất hiện trong nhiều giao dịch. \\ \hline
+\texttt{users.username} $\rightarrow$ \texttt{transactions.user\_username} & Một người dùng thực hiện nhiều giao dịch. \\ \hline
+\end{tabularx}
+\caption{Mô tả quan hệ giữa các bảng}
+\end{table}
+
+\noindent\textbf{Ràng buộc và chỉ mục quan trọng:}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{|L{4.2cm}|L{2.4cm}|X|}
+\hline
+\textbf{Tên} & \textbf{Loại} & \textbf{Mô tả} \\ \hline
+PRIMARY KEY & Key & Khóa chính của cả bốn bảng. \\ \hline
+\texttt{sku}, \texttt{username}, \texttt{code} & Unique & Không trùng lặp định danh nghiệp vụ. \\ \hline
+\texttt{chk\_quantity} & Check & Số lượng tồn kho không âm. \\ \hline
+\texttt{fk\_supplier} & Foreign Key & \texttt{products} tham chiếu \texttt{suppliers}. \\ \hline
+\texttt{fk\_tx\_product} & Foreign Key & \texttt{transactions} tham chiếu \texttt{products}. \\ \hline
+\texttt{fk\_tx\_user} & Foreign Key & \texttt{transactions} tham chiếu \texttt{users}. \\ \hline
+\texttt{idx\_tx\_product/type/date} & Index & Tối ưu truy vấn lịch sử và thống kê. \\ \hline
+\end{tabularx}
+\caption{Các ràng buộc và chỉ mục}
+\end{table}
+
+\section*{Kết luận}
+\addcontentsline{toc}{chapter}{Kết luận}
+Đề tài đã hoàn thành việc phân tích, thiết kế và xây dựng \textbf{Hệ thống Quản
+lý Kho hàng} bằng ngôn ngữ Python với giao diện Tkinter và CSDL SQLite. Hệ thống
+đáp ứng đầy đủ tám nghiệp vụ cốt lõi: quản lý tài khoản, hồ sơ cá nhân, danh mục
+hàng hóa, nhà cung cấp, nhập kho, xuất kho, lịch sử giao dịch và thống kê báo
+cáo. Phần mềm được tổ chức theo kiến trúc phân tầng rõ ràng, sử dụng giao dịch
+CSDL để bảo đảm tính toàn vẹn dữ liệu khi luân chuyển hàng hóa, và được kiểm thử
+tự động (17 ca kiểm thử đơn vị) nhằm bảo đảm tính đúng đắn của các nghiệp vụ.
+
+Hướng phát triển tiếp theo có thể bao gồm: triển khai trên CSDL máy chủ
+(MySQL/PostgreSQL) cho môi trường nhiều người dùng, bổ sung mã vạch/QR cho hàng
+hóa, tích hợp biểu đồ trực quan và xuất báo cáo PDF, cũng như xây dựng phiên bản
+web để truy cập từ xa.
+
+\end{document}
